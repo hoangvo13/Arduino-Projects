@@ -1,0 +1,95 @@
+const int ldrT = 0;
+const int ldrB = 1;
+const int ldrL = 2;
+const int ldrR = 3;
+
+int valT = 0;
+int valB = 0;
+int valL = 0;
+int valR = 0;
+
+#define BAUD (9600)
+
+// Vertical Stepper motor
+int dirV = 4;
+int stepV = 5;
+int enabV = 6;
+
+// Horizontal Stepper motor
+int dirH = 8;
+int stepH = 9;
+int enabH = 10;
+
+void setup() {
+  Serial.begin(BAUD);
+  
+  // pinMode for vertical motor
+  pinMode(dirV,OUTPUT);
+  pinMode(stepV,OUTPUT);
+  pinMode(enabV,OUTPUT);
+  digitalWrite(enabV,LOW);
+  
+  // pinMode for horizontal motor
+  pinMode(dirH,OUTPUT);
+  pinMode(stepH,OUTPUT);
+  pinMode(enabH,OUTPUT);
+  digitalWrite(enabH,LOW);
+}
+
+void loop() {
+  // checking value of each LDR
+  // TOP
+  valT = analogRead(ldrT);
+  Serial.print("Value of top LDR: ");
+  Serial.println(valT);  
+  // BOTTOM 
+  valB = analogRead(ldrB);
+  Serial.print("Value of bottom LDR: ");
+  Serial.println(valB);
+  // LEFT
+  valL = analogRead(ldrL);
+  Serial.print("Value of left LDR: ");
+  Serial.println(valL);
+  // RIGHT
+  valR = analogRead(ldrR);
+  Serial.print("Value of right LDR: ");
+  Serial.println(valR);
+
+  delay(5000);
+
+// for Vertical motor
+  // if valT > valB 
+  while (valT > (valB + 75)) {
+    digitalWrite(dirV,LOW);
+    digitalWrite(stepV,HIGH);
+    delayMicroseconds(500);
+    digitalWrite(stepV,LOW);
+    delayMicroseconds(500);
+  }
+  // if valT < valB
+  while ((valT + 75) < valB) {
+    digitalWrite(dirV,HIGH);
+    digitalWrite(stepV,HIGH);
+    delayMicroseconds(500);
+    digitalWrite(stepV,LOW);
+    delayMicroseconds(500);
+  }
+
+// for Horizontal motor
+  // if valL > valR
+  while(valL > (valR + 75)) {
+    digitalWrite(dirH,LOW);
+    digitalWrite(stepH,HIGH);
+    delayMicroseconds(500);
+    digitalWrite(stepH,LOW);
+    delayMicroseconds(500);
+  }
+  // if valL < valR
+  while((valL + 75) < valR) {
+    digitalWrite(dirH,HIGH);
+    digitalWrite(stepH,HIGH);
+    delayMicroseconds(500);
+    digitalWrite(stepH,LOW);
+    delayMicroseconds(500);
+  }
+}
