@@ -1,0 +1,31 @@
+#include <LiquidCrystal.h>
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+const int sensor = 0;
+int valueP = 0;
+const int solePin = 13;
+
+void setup() {
+  Serial.begin(9600);
+  lcd.begin(16, 2);
+  lcd.print("Humidity(%): ");
+  pinMode(solePin,OUTPUT);
+}
+
+void loop() {
+  int value = analogRead(sensor);
+  valueP = map(value, 0, 1023, 100, 0);
+  lcd.setCursor(14, 0);
+  lcd.print(valueP);
+  Serial.println(valueP);
+  delay(5000);
+  
+  while (valueP < 30) {
+    digitalWrite(solePin,HIGH);
+    int value = analogRead(sensor);
+    valueP = map(value, 0, 1023, 100, 0);
+    lcd.setCursor(16, 0);
+    lcd.print(valueP);
+    Serial.println(valueP);
+    delay(1000);
+  }
+}
