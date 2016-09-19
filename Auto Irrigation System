@@ -1,7 +1,6 @@
 #include <LiquidCrystal.h>
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 const int sensor = 0;
-int valueP = 0;
 const int solePin = 13;
 
 void setup() {
@@ -13,19 +12,25 @@ void setup() {
 
 void loop() {
   int value = analogRead(sensor);
-  valueP = map(value, 0, 1023, 100, 0);
+  value = map(value, 0, 1023, 100, 0);
+  Serial.println(value);
   lcd.setCursor(14, 0);
-  lcd.print(valueP);
-  Serial.println(valueP);
-  delay(5000);
-  
-  while (valueP < 30) {
-    digitalWrite(solePin,HIGH);
-    int value = analogRead(sensor);
-    valueP = map(value, 0, 1023, 100, 0);
-    lcd.setCursor(16, 0);
-    lcd.print(valueP);
-    Serial.println(valueP);
-    delay(1000);
+  lcd.print(value);
+
+  if (value < 30) {
+    Serial.println("Bơm nào");
+    lcd.setCursor(1, 1);
+    lcd.print("Watering");
+    
+    while (value < 30) {
+      digitalWrite(solePin,HIGH);
+      int value = analogRead(sensor);
+      value = map(value, 0, 1023, 100, 0);
+      Serial.println(value);
+      delay(2000);
+    }
   }
+  else digitalWrite(solePin,LOW);
+
+  delay(6000);
 }
