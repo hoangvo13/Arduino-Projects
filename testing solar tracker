@@ -1,95 +1,190 @@
+// LDR pins
 const int ldrT = 0;
 const int ldrB = 1;
 const int ldrL = 2;
 const int ldrR = 3;
 
+// Value of LDR
 int valT = 0;
 int valB = 0;
 int valL = 0;
 int valR = 0;
 
-#define BAUD (9600)
-
 // Vertical Stepper motor
-int dirV = 4;
-int stepV = 5;
-int enabV = 6;
+int dirV = 3;
+int stepV = 4;
+int sleepV = 5;
+int resetV = 6;
+int enabV = 7;
+int difTB = 0;
 
 // Horizontal Stepper motor
-int dirH = 8;
-int stepH = 9;
-int enabH = 10;
+int dirH = 9;
+int stepH = 10;
+int sleepH = 11;
+int resetH = 12;
+int enabH = 13;
+int difLR = 0;
+
+int tolH = 75;
+int tolV = 150;
 
 void setup() {
-  Serial.begin(BAUD);
+  Serial.begin(9600);
   
   // pinMode for vertical motor
   pinMode(dirV,OUTPUT);
   pinMode(stepV,OUTPUT);
   pinMode(enabV,OUTPUT);
   digitalWrite(enabV,LOW);
+  digitalWrite(resetV,HIGH);
+  digitalWrite(sleepV,LOW);
   
   // pinMode for horizontal motor
   pinMode(dirH,OUTPUT);
   pinMode(stepH,OUTPUT);
   pinMode(enabH,OUTPUT);
   digitalWrite(enabH,LOW);
+  digitalWrite(resetH,HIGH);
+  digitalWrite(sleepH,LOW);
 }
 
 void loop() {
-  // checking value of each LDR
-  // TOP
-  valT = analogRead(ldrT);
-  Serial.print("Value of top LDR: ");
-  Serial.println(valT);  
-  // BOTTOM 
-  valB = analogRead(ldrB);
-  Serial.print("Value of bottom LDR: ");
-  Serial.println(valB);
-  // LEFT
   valL = analogRead(ldrL);
-  Serial.print("Value of left LDR: ");
+  Serial.print("left LDR: ");
   Serial.println(valL);
-  // RIGHT
   valR = analogRead(ldrR);
-  Serial.print("Value of right LDR: ");
+  Serial.print("right LDR: ");
   Serial.println(valR);
+  difLR = abs(valL - valR);
+  Serial.print("Diff of LR: ");
+  Serial.println(difLR);
+  
+  valT = analogRead(ldrT);
+  Serial.print("top LDR: ");
+  Serial.println(valT);
+  valB = analogRead(ldrB);
+  Serial.print("bottom LDR: ");
+  Serial.println(valB);
+  difTB = abs(valT - valB);
+  Serial.print("Diff of TB: ");
+  Serial.println(difTB);
+  
+  delay(1000);
 
-  delay(5000);
+  if (difLR > tolH && valL > valR) {
+    while (difLR > tolH) {
+      leftHorizontal();
+      valL = analogRead(ldrL);
+      Serial.println(valL);
+      valR = analogRead(ldrR);
+      Serial.println(valR);
+      difLR = abs(valL - valR);
+      Serial.println(difLR);
+      
+      delay(1000);
+    }
+    digitalWrite(sleepH,LOW);
+    delay(10);
+  }
+  
+  if (difLR > tolH && valL < valR) {
+    while (difLR > tolH) {
+      rightHorizontal();
+      valL = analogRead(ldrL);
+      Serial.println(valL);
+      valR = analogRead(ldrR);
+      Serial.println(valR);
+      difLR = abs(valL - valR);
+      Serial.println(difLR);
+      
+      delay(1000);
+    }
+    digitalWrite(sleepH,LOW);
+    delay(10);
+  }
 
-// for Vertical motor
-  // if valT > valB 
-  while (valT > (valB + 75)) {
-    digitalWrite(dirV,LOW);
-    digitalWrite(stepV,HIGH);
-    delayMicroseconds(500);
-    digitalWrite(stepV,LOW);
-    delayMicroseconds(500);
-  }
-  // if valT < valB
-  while ((valT + 75) < valB) {
-    digitalWrite(dirV,HIGH);
-    digitalWrite(stepV,HIGH);
-    delayMicroseconds(500);
-    digitalWrite(stepV,LOW);
-    delayMicroseconds(500);
+  // LDR top is larger than LDR bottom =>> decreasing car jack
+  if (difTB > tolV && valT > valB) {
+    while (difTB > tolV) {
+      lowerVertical();
+      valT = analogRead(ldrT);
+      Serial.println(valT);
+      valB = analogRead(ldrB);
+      Serial.println(valB);
+      difTB = abs(valT - valB);
+      Serial.println(difTB);
+      
+      delay(1000);
+    }
+    digitalWrite(sleepV,LOW);
+    delay(10);
   }
 
-// for Horizontal motor
-  // if valL > valR
-  while(valL > (valR + 75)) {
-    digitalWrite(dirH,LOW);
-    digitalWrite(stepH,HIGH);
-    delayMicroseconds(500);
-    digitalWrite(stepH,LOW);
-    delayMicroseconds(500);
+  // LDR bottom is larger than LDR top =>> increasing car jack
+  if (difTB > tolV && valT < valB) {
+    while (difTB > tolV) {
+      higherVertical();
+      valT = analogRead(ldrT);
+      Serial.println(valT);
+      valB = analogRead(ldrB);
+      Serial.println(valB);
+      difTB = abs(valT - valB);
+      Serial.println(difTB);
+
+      delay(1000);
+    }
+    digitalWrite(sleepV,LOW);
+    delay(10);
+  }  
+}
+
+void leftHorizontal() {
+  digitalWrite(dirH,HIGH);
+  digitalWrite(sleepH,HIGH);
+  delay(10);
+  runMotorH();
+}
+
+void rightHorizontal() {
+  digitalWrite(dirH,LOW);
+  digitalWrite(sleepH,HIGH);
+  delay(10);
+  runMotorH();
+}
+
+void lowerVertical() {
+  digitalWrite(dirV,LOW);
+  digitalWrite(sleepV,HIGH);
+  delay(10);
+  for (int x=0; x<2; x++) {
+    runMotorV();
   }
-  // if valL < valR
-  while((valL + 75) < valR) {
-    digitalWrite(dirH,HIGH);
-    digitalWrite(stepH,HIGH);
-    delayMicroseconds(500);
-    digitalWrite(stepH,LOW);
-    delayMicroseconds(500);
+}
+
+void higherVertical() {
+  digitalWrite(dirV,HIGH);
+  digitalWrite(sleepV,HIGH);
+  delay(10);
+  for (int x=0; x<2; x++) {
+    runMotorV();
   }
+}
+
+void runMotorH() {
+  for (int y=0; y<50; y++) {
+      digitalWrite(stepH,HIGH);
+      delay(50);
+      digitalWrite(stepH,LOW);
+      delay(50);
+  }
+}
+
+void runMotorV() {
+  for (int y=0; y<200; y++) {
+      digitalWrite(stepV,HIGH);
+      delay(5);
+      digitalWrite(stepV,LOW);
+      delay(5);
+  }    
 }
